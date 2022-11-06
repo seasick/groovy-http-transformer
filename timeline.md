@@ -41,3 +41,8 @@ At this point the server is echoing the ip address of the requestee.
 While looking into parsing cli arguments and trying importing the picocli dependency, I switched to looking into groovy vscode integration. Found `marlon407.code-groovy` and `NicolasVuillamy.vscode-groovy-lint`.
 
 Linter immideatly has a few things to warn me about. Why shouldn't def be used for declaration?
+
+# Digging into the http server
+
+- why is my server not printing anything. Seems that the print statement throws an error, but is caught somewhere.
+  - `http.remoteAddress.holder` does not exist and an error is thrown. No idea where it is catched though.

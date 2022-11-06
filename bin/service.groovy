@@ -35,7 +35,8 @@ HttpServer.create(new InetSocketAddress(options.port as int), /*max backlog*/ 0)
         http.responseBody.withWriter { out ->
             out << "Hello ${http.remoteAddress.hostName}!\n"
         }
-        println "Hit from Host: ${http.remoteAddress.hostName} on port: ${http.remoteAddress.holder.port}"
+
+        println "Hit from Host: ${http.remoteAddress.hostName} from port: ${http.remoteAddress.port}"
     }
     start()
 }
