@@ -25,12 +25,14 @@ out of the box.
 Looking for solutions to parse cli arguments.
 
 Looked into https://opensource.com/article/21/8/parsing-command-options-groovy,
-but against what they were writing, `groovy.cli.picocli.CliBuilder` is not imported by default.
+but against what they were writing, `groovy.cli.picocli.CliBuilder` is not imported
+by default.
 
 Found https://issues.apache.org/jira/browse/GROOVY-9432 which explains how to work
 around it. It seems not even they know why the workaround is needed.
 
-After failing at using the annotations of PicoCli, I fiddled with the requirements of `CliBuilder` and added required fields and usage.
+After failing at using the annotations of PicoCli, I fiddled with the requirements
+of `CliBuilder` and added required fields and usage.
 
 Next up was converting a string `"8080"` to an integer.
 
@@ -38,11 +40,28 @@ At this point the server is echoing the ip address of the requestee.
 
 # VSCode
 
-While looking into parsing cli arguments and trying importing the picocli dependency, I switched to looking into groovy vscode integration. Found `marlon407.code-groovy` and `NicolasVuillamy.vscode-groovy-lint`.
+While looking into parsing cli arguments and trying importing the picocli dependency,
+I switched to looking into groovy vscode integration. Found `marlon407.code-groovy` and
+`NicolasVuillamy.vscode-groovy-lint`.
 
-Linter immideatly has a few things to warn me about. Why shouldn't def be used for declaration?
+Linter immideatly has a few things to warn me about. Why shouldn't def be used for
+declaration?
 
 # Digging into the http server
 
-- why is my server not printing anything. Seems that the print statement throws an error, but is caught somewhere.
-  - `http.remoteAddress.holder` does not exist and an error is thrown. No idea where it is catched though.
+- why is my server not printing anything. Seems that the print statement throws an error,
+  but is caught somewhere.
+  - `http.remoteAddress.holder` does not exist and an error is thrown.
+    No idea where it is catched though.
+
+## Endpoints
+
+I want to have an endpoint which is capable of returning configurations and one
+endpoint for each config which should "execute" the configuration on the incoming
+request.
+
+### Problems
+
+I haven't figured out how to define several Exceptions in one file and import them in another.
+Having one exception per file works though. That is why there is a
+`HttpMethodNotAllowedException.groovy` file.

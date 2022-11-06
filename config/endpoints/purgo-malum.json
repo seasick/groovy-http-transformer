@@ -1,0 +1,19 @@
+{
+    "name": "Purgo Malum",
+    "description": "Filters and removes content of profanity and other unwanted texts",
+    "receiver": {
+        "protocol": "https",
+        "host": "www.purgomalum.com",
+        "port": "443",
+        "path": "/service/json?text=$text"
+    },
+    "input": [
+        {
+            "name": "text",
+            "from": {
+                "type": "query",
+                "name": "content"
+            }
+        }
+    ]
+}
