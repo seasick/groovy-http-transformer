@@ -7,25 +7,30 @@
 import com.sun.net.httpserver.HttpServer
 import groovy.cli.picocli.CliBuilder
 
-
+// Define what arguments this script accepts.
 def cli = new CliBuilder(usage: 'service.groovy --port <port>')
-
 cli.with {
    p longOpt: 'port', args: 1, argName: 'port', required: true, 'Listening port'
 }
 
+// Parse the arguments
 def options = cli.parse(args)
 
+// If there aren't any options at all, return
 if (!options) {
+    println "No options given."
+    System.exit(1)
    return
 }
 
+// Check if the port is numeric
 if (!options.port || !options.port.isNumber()) {
-    println "Port must be numeric"
+    println "Port must be numeric."
     System.exit(1)
     return
 }
 
+// Create a http server
 HttpServer.create(new InetSocketAddress(options.port as int), /*max backlog*/ 0).with {
     println "Server is listening on ${options.port}, hit Ctrl+C to exit."
 
@@ -38,5 +43,7 @@ HttpServer.create(new InetSocketAddress(options.port as int), /*max backlog*/ 0)
 
         println "Hit from Host: ${http.remoteAddress.hostName} from port: ${http.remoteAddress.port}"
     }
+
+    // Start the http server
     start()
 }
