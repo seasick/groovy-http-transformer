@@ -1,3 +1,11 @@
 package server.exceptions
 
-class NotFoundException extends Exception {} // 405
+class NotFoundException extends HttpStatusException {
+
+    int code = 404
+
+    NotFoundException(String message) {
+        super(message)
+    }
+
+}

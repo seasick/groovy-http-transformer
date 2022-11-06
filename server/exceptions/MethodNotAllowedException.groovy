@@ -1,3 +1,11 @@
 package server.exceptions
 
-class MethodNotAllowedException extends Exception {} // 405
+class MethodNotAllowedException extends HttpStatusException {
+
+    int code = 405
+
+    MethodNotAllowedException(String message) {
+        super(message)
+    }
+
+}

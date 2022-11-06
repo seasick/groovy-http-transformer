@@ -65,36 +65,11 @@ HttpServer.create(new InetSocketAddress(options.port as int), /*max backlog*/ 0)
         }
     }
 
-    // Register route for reading configurations
-    createContext('/endpoints') { http ->
+    // Wrapper to help handle exceptions, use various http status codes and take
+    // care of response encoding.
+    def requestWrapper = { http, Closure closure ->
         try {
-            if (http.getRequestMethod() == 'GET') {
-                def configs = endpoints.getConfigs()
-
-                http.responseHeaders.add('Content-Type', 'application/json')
-                http.sendResponseHeaders(200, 0)
-
-                http.responseBody.withWriter { out ->
-                    out << JsonOutput.toJson(configs)
-                }
-            } else {
-                throw new MethodNotAllowedException()
-            }
-        } catch (MethodNotAllowedException e) {
-            log(http, 'Method not allowed')
-            http.sendResponseHeaders(405, 0)
-            http.responseBody.close()
-        } catch (Exception e) {
-            log(http, e.message)
-            http.sendResponseHeaders(500, 0)
-            http.responseBody.close()
-        }
-    }
-
-    // Register route for handling endpoints
-    createContext('/endpoints/') { http ->
-        try {
-            def result = endpoints.handle(http)
+            def result = closure()
 
             http.responseHeaders.add('Content-Type', 'application/json')
             http.sendResponseHeaders(200, 0)
@@ -102,21 +77,11 @@ HttpServer.create(new InetSocketAddress(options.port as int), /*max backlog*/ 0)
             http.responseBody.withWriter { out ->
                 out << JsonOutput.toJson(result)
             }
-        } catch (MethodNotAllowedException e) {
-            log(http, 'Method not allowed')
-            http.sendResponseHeaders(405, 0)
-            http.responseBody.close()
-        } catch (Exception e) {
-            log(http, e.message)
-            http.sendResponseHeaders(500, 0)
-            http.responseBody.close()
-        }
 
-        try {
-            endpoints.handle(http)
-        } catch (MethodNotAllowedException e) {
-            log(http, 'Method not allowed')
-            http.sendResponseHeaders(405, 0)
+            log(http)
+        } catch (HttpStatusException e) {
+            log(http, e.message)
+            http.sendResponseHeaders(e.code, 0)
             http.responseBody.close()
         } catch (Exception e) {
             log(http, e.message)
@@ -125,15 +90,32 @@ HttpServer.create(new InetSocketAddress(options.port as int), /*max backlog*/ 0)
         }
     }
 
+    // Register route for reading configurations
+    createContext('/endpoints') { http ->
+        requestWrapper(http) {
+            if (http.requestMethod == 'GET') {
+                return endpoints.getConfigs()
+            } else {
+                throw new MethodNotAllowedException("${http.requestMethod} is not allowed")
+            }
+        }
+    }
+
+    // Register route for handling endpoints
+    createContext('/endpoints/') { http ->
+        requestWrapper(http) {
+            return endpoints.handle(http)
+        }
+    }
+
     // Catchall path
     createContext('/') { http ->
-        http.responseHeaders.add('Content-type', 'text/plain')
-        http.sendResponseHeaders(200, 0)
-        http.responseBody.withWriter { out ->
-            out << "Hello ${http.remoteAddress.hostName}!\n"
+        requestWrapper(http) {
+            if (http.requestURI.path != '/') {
+                throw new NotFoundException("${http.requestURI.path} not found")
+            }
+            return "Hello ${http.remoteAddress.hostName}!\n"
         }
-
-        log(http)
     }
 
     // Start the http server
