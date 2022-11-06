@@ -6,6 +6,7 @@
 
 import com.sun.net.httpserver.HttpServer
 import groovy.cli.picocli.CliBuilder
+import groovy.json.JsonOutput
 import server.routes.Endpoints
 import server.exceptions.*
 
@@ -61,7 +62,14 @@ HttpServer.create(new InetSocketAddress(options.port as int), /*max backlog*/ 0)
     createContext('/endpoints') { http ->
         try {
             if (http.getRequestMethod() == 'GET') {
-                endpoints.getConfigs(http)
+                def configs = endpoints.getConfigs()
+
+                http.responseHeaders.add('Content-Type', 'application/json')
+                http.sendResponseHeaders(200, 0)
+
+                http.responseBody.withWriter { out ->
+                    out << JsonOutput.toJson(configs)
+                }
             } else {
                 throw new MethodNotAllowedException()
             }
@@ -78,6 +86,25 @@ HttpServer.create(new InetSocketAddress(options.port as int), /*max backlog*/ 0)
 
     // Register route for handling endpoints
     createContext('/endpoints/') { http ->
+        try {
+            def result = endpoints.handle(http)
+
+            http.responseHeaders.add('Content-Type', 'application/json')
+            http.sendResponseHeaders(200, 0)
+
+            http.responseBody.withWriter { out ->
+                out << JsonOutput.toJson(result)
+            }
+        } catch (MethodNotAllowedException e) {
+            log(http, 'Method not allowed')
+            http.sendResponseHeaders(405, 0)
+            http.responseBody.close()
+        } catch (Exception e) {
+            log(http, e.message)
+            http.sendResponseHeaders(500, 0)
+            http.responseBody.close()
+        }
+
         try {
             endpoints.handle(http)
         } catch (MethodNotAllowedException e) {

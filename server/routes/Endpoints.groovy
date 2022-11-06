@@ -1,9 +1,8 @@
 package server.routes
 
-import com.sun.net.httpserver.HttpExchange
 import static groovy.io.FileType.FILES
+import com.sun.net.httpserver.HttpExchange
 import groovy.json.JsonSlurper
-import groovy.json.JsonOutput
 import server.exceptions.NotFoundException
 
 
@@ -38,24 +37,19 @@ class Endpoints {
         }).toString()
     }
 
-    def getConfigs(HttpExchange http) {
-        def dir = new File(this.configpath + '/endpoints')
+    def getConfigs() {
+        File dir = new File(this.configpath + '/endpoints')
 
-        http.responseHeaders.add('Content-Type', 'application/json')
-        http.sendResponseHeaders(200, 0)
+        def configs = []
 
-        http.responseBody.withWriter { out ->
-            def configs = []
-
-            dir.eachFile(FILES) { file ->
-                configs << jsonSlurper.parse(file)
-            }
-
-            out << JsonOutput.toJson(configs)
+        dir.eachFile(FILES) { file ->
+            configs << jsonSlurper.parse(file)
         }
+
+        return configs
     }
 
-    def handle(HttpExchange http) {
+    Map handle(HttpExchange http) {
         String endpoint = http.requestURI.path.replace('/endpoints/', '')
         String configfilepath = this.configpath + '/endpoints/' + endpoint + '.json'
         File configfile = new File(configfilepath) // TODO Prevent directory traversal
@@ -88,15 +82,16 @@ class Endpoints {
         def getUrl = new URL(receiverUrl)
         URLConnection get = getUrl.openConnection()
 
-        // TODO Transform? the response
 
         if (get.responseCode == 200) {
-            http.responseHeaders.add('Content-Type', 'application/json')
-            http.sendResponseHeaders(200, 0)
-
-            http.responseBody.withWriter { out ->
-                out << get.getInputStream().text
+            // Transform application/json to Groovy data structures
+            if (get.contentType == 'application/json') {
+                return jsonSlurper.parseText(get.inputStream.text)
             }
+
+            return [
+                result: get.inputStream.text
+            ]
         } else {
             throw new Exception("ResponseCode was not 200 (${get.responseCode})")
         }
