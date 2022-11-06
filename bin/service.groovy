@@ -16,6 +16,8 @@ cli.with {
     p longOpt: 'port', args: 1, argName: 'port', required: true, 'Listening port'
     d longOpt: 'configpath', args: 1, argName: 'configpath', required: true,
         defaultValue: 'config', 'Path to configuration directory'
+    t longOpt: 'threads', args: 1, argName: 'threads', defaultValue: '10',
+        'Number of threads used for processing http requests'
 }
 
 // Parse the arguments
@@ -37,7 +39,12 @@ if (!options.port || !options.port.isNumber()) {
 
 // Create a http server
 HttpServer.create(new InetSocketAddress(options.port as int), /*max backlog*/ 0).with {
-    println "Server is listening on ${options.port}, hit Ctrl+C to exit."
+    println "Server is listening on ${options.port}"
+    println "  threads ${options.threads}"
+    println "  config path '${options.configpath}'"
+    println "\nHit Ctrl+C to exit."
+
+    setExecutor(java.util.concurrent.Executors.newFixedThreadPool(options.threads as int));
 
     // Handler for endpoint requests
     def endpoints = new Endpoints(options.configpath)
